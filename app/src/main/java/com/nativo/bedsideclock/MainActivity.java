@@ -6,8 +6,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.BatteryManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.SystemClock;
 import android.view.View;
-import android.view.Window;
 import android.view.WindowManager;
 
 import androidx.activity.EdgeToEdge;
@@ -18,6 +19,9 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.nativo.bedsideclock.databinding.ActivityMainBinding;
 
+import java.util.Calendar;
+import java.util.Locale;
+
 // 1 - bateria
 
 public class MainActivity extends AppCompatActivity implements View
@@ -25,6 +29,8 @@ public class MainActivity extends AppCompatActivity implements View
         .OnClickListener {
 
     private ActivityMainBinding binding;
+    private final Handler handler = new Handler();
+    private Runnable runnable;
 
     private final BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
         @Override
@@ -57,6 +63,34 @@ public class MainActivity extends AppCompatActivity implements View
         setFlags();
         setListeners();
         hideOptions();
+        startBedsideClock();
+    }
+
+    private void startBedsideClock() {
+
+        runnable = new Runnable() {
+            @Override
+            public void run() {
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTimeInMillis(System.currentTimeMillis());
+
+                int hours = calendar.get(Calendar.HOUR_OF_DAY);
+                int minute = calendar.get(Calendar.MINUTE);
+                int second = calendar.get(Calendar.SECOND);
+
+
+                String hoursMinuteFormat = String.format(Locale.getDefault(), "%02d:%02d", hours, minute);
+                String secondFormat = String.format(Locale.getDefault(), "%02d", second);
+
+                binding.textViewHourMinute.setText(hoursMinuteFormat);
+                binding.textViewSecond.setText(secondFormat);
+
+                long now = SystemClock.uptimeMillis();
+                handler.postAtTime(runnable , now + (1000 - (now % 1000))); // 1 segundo
+            }
+        };
+        runnable.run();
+
     }
 
 
